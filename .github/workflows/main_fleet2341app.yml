@@ -18,18 +18,18 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install & Build
-        run: |
-          npm ci || npm install
-          npm run build
+      - name: Install Dependencies & Build
         env:
-          CI: false   # Treats warnings as non-fatal and prevents test blocks
+          CI: false
+        run: |
+          npm install
+          npm run build
 
-      - name: Upload Artifact
+      - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: react-app
-          path: build # Change to 'dist' if using Vite
+          name: node-app
+          path: build
 
   deploy:
     runs-on: ubuntu-latest
@@ -38,7 +38,7 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write # Required for requesting the JWT token
+      id-token: write
       contents: read
 
     steps:
