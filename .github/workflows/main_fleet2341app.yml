@@ -1,7 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy Node.js app to Azure Web App - fleet2341app
+name: Build and Deploy React App to Azure Web App
 
 on:
   push:
@@ -11,54 +8,47 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
-    permissions:
-      contents: read #This is required for actions/checkout
-
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js version
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '20'
 
-      - name: npm install, and build, 
+      - name: Install & Build
         run: |
-          npm install
-          npm run build --if-present
-          
-      - name: Upload artifact for deployment job
+          npm ci || npm install
+          npm run build
+        env:
+          CI: false   # Treats warnings as non-fatal and prevents test blocks
+
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
-          path: build
+          name: react-app
+          path: build # Change to 'dist' if using Vite
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
-      - name: Download artifact from build job
+      - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
-          name: node-app
-      
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_DFD9363C7DD84B35B658266DE8CCE527 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A2A39E83E3F8481A898127A5CA16A3C3 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_3AC19AEAC22641DF963F7A8C98789C1F }}
+          name: react-app
 
-      - name: 'Deploy to Azure Web App'
-        uses: azure/webapps-deploy@v3
+      - name: Deploy to Azure Web App
         id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
         with:
           app-name: 'fleet2341app'
           slot-name: 'Production'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_... }}
           package: .
-          
