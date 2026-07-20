@@ -37,12 +37,22 @@ jobs:
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    permissions:
+      id-token: write # Required for requesting the JWT token
+      contents: read
 
     steps:
-      - name: Download Artifact
+      - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: react-app
+          name: node-app
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_DFD9363C70D84B35B6582660E8CCE527 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A2A39E83E3F8481A898127A5CA16A3C3 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_3AC19AEAC22641DF963F7A8C98789C1F }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -50,5 +60,4 @@ jobs:
         with:
           app-name: 'fleet2341app'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_... }}
           package: .
